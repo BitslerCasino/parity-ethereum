@@ -35,7 +35,7 @@ pub struct CallResult {
 }
 
 /// `Call` type. Distinguish between different types of contract interactions.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CallType {
 	/// Call
 	Call,
@@ -160,7 +160,56 @@ pub struct Call {
 	/// The input data provided to the call.
 	pub input: Bytes,
 	/// The type of the call.
-	pub call_type: Option<CallType>,
+	pub call_type: BackwardsCompatibleCallType,
+}
+
+/// This is essentially an `Option<CallType>`,
+/// but with a custom `rlp::Decodable` implementation
+/// which preserves backwards compatibility with
+/// the older encoding (`CallType`) used in parity-ethereum versions < 2.7.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BackwardsCompatibleCallType {
+	None,
+	Some(CallType),
+}
+
+impl From<Option<CallType>> for BackwardsCompatibleCallType {
+	fn from(option: Option<CallType>) -> Self {
+		match option {
+			Some(call_type) => BackwardsCompatibleCallType::Some(call_type),
+			None => BackwardsCompatibleCallType::None,
+		}
+	}
+}
+
+impl From<BackwardsCompatibleCallType> for Option<CallType> {
+	fn from(value: BackwardsCompatibleCallType) -> Option<CallType> {
+		match value {
+			BackwardsCompatibleCallType::Some(call_type) => Some(call_type),
+			BackwardsCompatibleCallType::None => None,
+		}
+	}
+}
+
+// Encoding is the same as `Option<CallType>`
+impl Encodable for BackwardsCompatibleCallType {
+	fn rlp_append(&self, s: &mut RlpStream) {
+		let optional_call_type: Option<CallType> = From::from(*self);
+		optional_call_type.rlp_append(s);
+	}
+}
+
+// Try to decode it as `CallType` first, and then as `Option<CallType>`.
+impl Decodable for BackwardsCompatibleCallType {
+	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+		if rlp.is_data() {
+			let call_type: CallType = Decodable::decode(rlp)?;
+			Ok(BackwardsCompatibleCallType::Some(call_type))
+		} else {
+			let optional_call_type: Option<CallType> = Decodable::decode(rlp)?;
+			Ok(optional_call_type.into())
+		}
+	}
 }
 
 impl From<ActionParams> for Call {
@@ -172,7 +221,7 @@ impl From<ActionParams> for Call {
 				value: p.value.value(),
 				gas: p.gas,
 				input: p.data.unwrap_or_else(Vec::new),
-				call_type: CallType::try_from(p.action_type).ok(),
+				call_type: CallType::try_from(p.action_type).ok().into(),
 			},
 			_ => Call {
 				from: p.sender,
@@ -180,7 +229,7 @@ impl From<ActionParams> for Call {
 				value: p.value.value(),
 				gas: p.gas,
 				input: p.data.unwrap_or_else(Vec::new),
-				call_type: CallType::try_from(p.action_type).ok(),
+				call_type: CallType::try_from(p.action_type).ok().into(),
 			},
 		}
 	}
