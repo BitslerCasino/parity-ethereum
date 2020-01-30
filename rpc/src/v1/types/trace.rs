@@ -304,13 +304,14 @@ pub struct Call {
 
 impl From<trace::Call> for Call {
 	fn from(c: trace::Call) -> Self {
+		let optional: Option<trace::CallType> = c.call_type.into();
 		Call {
 			from: c.from,
 			to: c.to,
 			value: c.value,
 			gas: c.gas,
 			input: c.input.into(),
-			call_type: c.call_type.map(|c| c.into()),
+			call_type: optional.map(|c| c.into()),
 		}
 	}
 }
