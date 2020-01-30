@@ -381,7 +381,7 @@ mod tests {
 				value: 100.into(),
 				gas: 78792.into(),
 				init: vec![91, 96, 0, 86],
-				creation_method: Some(trace::CreationMethod::Create),
+				creation_method: Some(trace::CreationMethod::Create).into(),
 			}),
 			result: trace::Res::FailedCreate(TraceError::OutOfGas),
 			subtraces: 0
