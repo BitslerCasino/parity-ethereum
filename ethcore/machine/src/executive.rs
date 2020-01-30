@@ -1449,7 +1449,7 @@ mod tests {
 				value: 1.into(),
 				gas: 66560.into(),
 				input: vec![],
-				call_type: Some(trace::CallType::Call)
+				call_type: Some(trace::CallType::Call).into(),
 			}), result: trace::Res::Call(trace::CallResult {
 				gas_used: 600.into(),
 				output: vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 156, 17, 133, 165, 197, 233, 252, 84, 97, 40, 8, 151, 126, 232, 245, 72, 178, 37, 141, 49]
@@ -1641,7 +1641,7 @@ mod tests {
 				value: 100.into(),
 				gas: 100_000.into(),
 				input: vec![],
-				call_type: Some(trace::CallType::Call),
+				call_type: Some(trace::CallType::Call).into(),
 			}),
 			result: trace::Res::Call(trace::CallResult {
 				gas_used: U256::from(37_033),

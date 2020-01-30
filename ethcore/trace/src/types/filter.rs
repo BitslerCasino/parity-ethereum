@@ -272,7 +272,7 @@ mod tests {
 				value: 3.into(),
 				gas: 4.into(),
 				input: vec![0x5],
-				call_type: Some(CallType::Call),
+				call_type: Some(CallType::Call).into(),
 			}),
 			result: Res::FailedCall(TraceError::OutOfGas),
 			trace_address: vec![0].into_iter().collect(),

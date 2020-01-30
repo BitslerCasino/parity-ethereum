@@ -161,7 +161,7 @@ mod tests {
 				value: "3627e8f712373c0000".parse().unwrap(),
 				gas: 0x03e8.into(),
 				input: vec![],
-				call_type: Some(CallType::Call),
+				call_type: Some(CallType::Call).into(),
 			}),
 			result: Res::Call(CallResult {
 				gas_used: 0.into(),
