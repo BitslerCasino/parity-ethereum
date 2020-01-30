@@ -196,6 +196,36 @@ impl<T: Decodable> Decodable for BackwardsCompatibleOption<T> {
 	}
 }
 
+/// This is used for adding new fields in a backwards compable way.
+/// An equivalent of `#[serde(default)]` for `rlp`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BackwardsCompatibleNewField<T>(pub Option<T>);
+
+impl<T> From<Option<T>> for BackwardsCompatibleNewField<T> {
+	fn from(option: Option<T>) -> Self {
+		BackwardsCompatibleNewField(option)
+	}
+}
+
+// Encoding is the same as `Option<T>`
+impl<T: Encodable> Encodable for BackwardsCompatibleNewField<T> {
+	fn rlp_append(&self, s: &mut RlpStream) {
+		self.0.rlp_append(s);
+	}
+}
+
+// Try to decode it as `empty` first, and then as `Option<T>`.
+impl<T: Decodable> Decodable for BackwardsCompatibleNewField<T> {
+	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+		if rlp.is_empty() {
+			Ok(BackwardsCompatibleNewField(None))
+		} else {
+			let optional: Option<T> = Decodable::decode(rlp)?;
+			Ok(optional.into())
+		}
+	}
+}
+
 impl From<ActionParams> for Call {
 	fn from(p: ActionParams) -> Self {
 		match p.action_type {
@@ -242,7 +272,7 @@ pub struct Create {
 	/// The init code.
 	pub init: Bytes,
 	/// Creation method (CREATE vs CREATE2).
-	pub creation_method: BackwardsCompatibleOption<CreationMethod>,
+	pub creation_method: BackwardsCompatibleNewField<CreationMethod>,
 }
 
 impl From<ActionParams> for Create {
