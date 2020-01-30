@@ -160,54 +160,38 @@ pub struct Call {
 	/// The input data provided to the call.
 	pub input: Bytes,
 	/// The type of the call.
-	pub call_type: BackwardsCompatibleCallType,
+	pub call_type: BackwardsCompatibleOption<CallType>,
 }
 
-/// This is essentially an `Option<CallType>`,
+/// This is essentially an `Option<T>`,
 /// but with a custom `rlp::Decodable` implementation
 /// which preserves backwards compatibility with
-/// the older encoding (`CallType`) used in parity-ethereum versions < 2.7.
+/// the older encoding (`T`) used in parity-ethereum versions < 2.7.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum BackwardsCompatibleCallType {
-	None,
-	Some(CallType),
-}
+pub struct BackwardsCompatibleOption<T>(Option<T>);
 
-impl From<Option<CallType>> for BackwardsCompatibleCallType {
-	fn from(option: Option<CallType>) -> Self {
-		match option {
-			Some(call_type) => BackwardsCompatibleCallType::Some(call_type),
-			None => BackwardsCompatibleCallType::None,
-		}
+impl<T> From<Option<T>> for BackwardsCompatibleOption<T> {
+	fn from(option: Option<T>) -> Self {
+		BackwardsCompatibleOption(option)
 	}
 }
 
-impl From<BackwardsCompatibleCallType> for Option<CallType> {
-	fn from(value: BackwardsCompatibleCallType) -> Option<CallType> {
-		match value {
-			BackwardsCompatibleCallType::Some(call_type) => Some(call_type),
-			BackwardsCompatibleCallType::None => None,
-		}
-	}
-}
-
-// Encoding is the same as `Option<CallType>`
-impl Encodable for BackwardsCompatibleCallType {
+// Encoding is the same as `Option<T>`
+impl<T: Encodable> Encodable for BackwardsCompatibleOption<T> {
 	fn rlp_append(&self, s: &mut RlpStream) {
-		let optional_call_type: Option<CallType> = From::from(*self);
-		optional_call_type.rlp_append(s);
+		self.0.rlp_append(s);
 	}
 }
 
-// Try to decode it as `CallType` first, and then as `Option<CallType>`.
-impl Decodable for BackwardsCompatibleCallType {
+// Try to decode it as `T` first, and then as `Option<T>`.
+impl<T: Decodable> Decodable for BackwardsCompatibleOption<T> {
 	fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
 		if rlp.is_data() {
-			let call_type: CallType = Decodable::decode(rlp)?;
-			Ok(BackwardsCompatibleCallType::Some(call_type))
+			let raw: T = Decodable::decode(rlp)?;
+			Ok(BackwardsCompatibleOption(Some(raw)))
 		} else {
-			let optional_call_type: Option<CallType> = Decodable::decode(rlp)?;
-			Ok(optional_call_type.into())
+			let optional: Option<T> = Decodable::decode(rlp)?;
+			Ok(optional.into())
 		}
 	}
 }
@@ -258,7 +242,7 @@ pub struct Create {
 	/// The init code.
 	pub init: Bytes,
 	/// Creation method (CREATE vs CREATE2).
-	pub creation_method: Option<CreationMethod>,
+	pub creation_method: BackwardsCompatibleOption<CreationMethod>,
 }
 
 impl From<ActionParams> for Create {
@@ -268,7 +252,7 @@ impl From<ActionParams> for Create {
 			value: p.value.value(),
 			gas: p.gas,
 			init: p.code.map_or_else(Vec::new, |c| (*c).clone()),
-			creation_method: CreationMethod::try_from(p.action_type).ok(),
+			creation_method: CreationMethod::try_from(p.action_type).ok().into(),
 		}
 	}
 }
