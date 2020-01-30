@@ -544,7 +544,7 @@ mod tests {
 				value: 0.into(),
 				gas: 79000.into(),
 				input: vec![],
-				call_type: Some(trace::CallType::Call),
+				call_type: Some(trace::CallType::Call).into(),
 			}),
 			result: trace::Res::Call(trace::CallResult {
 				gas_used: U256::from(3_721), // in post-eip150
@@ -588,7 +588,7 @@ mod tests {
 				value: 0.into(),
 				gas: 79000.into(),
 				input: vec![],
-				call_type: Some(trace::CallType::Call),
+				call_type: Some(trace::CallType::Call).into(),
 			}),
 			result: trace::Res::Call(trace::CallResult {
 				gas_used: 724.into(), // in post-eip150
@@ -1100,7 +1100,7 @@ mod tests {
 				value: 100.into(),
 				gas: 79000.into(),
 				input: vec![],
-				call_type: Some(trace::CallType::Call),
+				call_type: Some(trace::CallType::Call).into(),
 			}),
 			result: trace::Res::Call(trace::CallResult {
 				gas_used: 3.into(),
