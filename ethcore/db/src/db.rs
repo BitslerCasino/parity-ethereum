@@ -273,7 +273,9 @@ impl<KVDB: KeyValueDB + ?Sized> Readable for KVDB {
 	{
 		self.get(col, key.key().as_ref())
 			.expect(&format!("db get failed, key: {:?}", key.key().as_ref()))
-			.map(|v| rlp::decode(&v).expect(&format!("{:?} could not be rlp decoded; KVDB::read failed", v)))
+			.map(|v| rlp::decode(&v).unwrap_or_else(|e| {
+				panic!("{:?} could not be rlp decoded; KVDB::read failed {}", v, e)
+			}))
 	}
 
 	fn exists<T, R>(&self, col: u32, key: &dyn Key<T, Target = R>) -> bool where R: AsRef<[u8]> {
