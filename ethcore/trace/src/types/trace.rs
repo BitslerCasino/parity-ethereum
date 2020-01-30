@@ -168,7 +168,7 @@ pub struct Call {
 /// which preserves backwards compatibility with
 /// the older encoding (`T`) used in parity-ethereum versions < 2.7.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct BackwardsCompatibleOption<T>(Option<T>);
+pub struct BackwardsCompatibleOption<T>(pub Option<T>);
 
 impl<T> From<Option<T>> for BackwardsCompatibleOption<T> {
 	fn from(option: Option<T>) -> Self {
